@@ -282,6 +282,13 @@ action :set do
     only_if "bash -c 'type -P hostnamectl'"
   end
 
+  # restart rsyslog if the hostname changed, so that syslog will have it
+  execute "restart rsyslog on hostname update" do
+    command "sudo service rsyslog restart"
+    action :nothing
+    only_if { ::File.exists?('/usr/sbin/rsyslogd') }
+  end
+
   # https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Networking_Guide/sec_Configuring_Host_Names_Using_hostnamectl.html
   # hostnamectl is used by other distributions too
   execute 'run hostnamectl' do
@@ -289,6 +296,7 @@ action :set do
     only_if "bash -c 'type -P hostnamectl'"
     not_if { Mixlib::ShellOut.new('hostname -f').run_command.stdout.strip == fqdn }
     notifies :create, 'ruby_block[show hostnamectl]', :delayed
+    notifies :run, 'execute[restart rsyslog on hostname update]', :immediately
   end
 
   # run domainname command if available
