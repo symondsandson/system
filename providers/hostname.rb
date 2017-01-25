@@ -296,7 +296,6 @@ action :set do
     only_if "bash -c 'type -P hostnamectl'"
     not_if { Mixlib::ShellOut.new('hostname -f').run_command.stdout.strip == fqdn }
     notifies :create, 'ruby_block[show hostnamectl]', :delayed
-    notifies :run, 'execute[restart rsyslog on hostname update]', :immediately
   end
 
   # run domainname command if available
@@ -361,6 +360,7 @@ action :set do
     notifies :run, 'execute[run domainname]', :immediately
     notifies :run, 'execute[run hostname]', :immediately
     notifies :create, 'ruby_block[show host info]', :delayed
+    notifies :run, 'execute[restart rsyslog on hostname update]', :immediately
     not_if { platform?('mac_os_x') }
     not_if { platform?('freebsd') }
   end
